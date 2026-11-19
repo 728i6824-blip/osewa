@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ワンちゃんお世話帳（クラウド家族共有版）</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --card: #ffffff;
+    --ink: #2b241e;
+    --muted: #7c7065;
+    --accent: #e07a38;
+    --accent-soft: #fff0e5;
+    --green: #2e8b57;
+    --green-soft: #e7f6ed;
+    --blue: #2f6fed;
+    --blue-soft: #ebf2ff;
+    --amber-soft: #fff8e6;
+    --border: #ebe3d8;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding-bottom: 96px;
+    line-height: 1.5;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(250, 247, 242, 0.96);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+  }
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .app-title {
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dog-sub {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .room-btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9ca3af;
+    display: inline-block;
+  }
+  .dot.cloud { background: var(--green); }
+  .dot.local { background: var(--accent); }
+  .member-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .member-label {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 14px;
+  }
+  .banner {
+    background: var(--amber-soft);
+    border: 1px solid #f5dfa2;
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .banner.ok {
+    background: var(--green-soft);
+    border-color: #a7d9b9;
+  }
+  .date-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+  .date-bar button {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+  }
+  .summary-card.kcal { background: var(--accent-soft); border-color: #f6cfa9; }
+  .summary-card.water { background: var(--blue-soft); border-color: #c8dcff; }
+  .summary-num { font-size: 17px; font-weight: 800; }
+  .summary-sub { font-size: 11px; color: var(--muted); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .card.done {
+    background: var(--green-soft);
+    border-color: #a7d9b9;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .meal-title { font-weight: 700; font-size: 15px; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .badge.done { background: var(--green); color: #fff; }
+  .field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  .form-field { display: flex; flex-direction: column; gap: 4px; }
+  .form-field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  label.mini { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+  input, select, textarea {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+  }
+  .field-row input, .field-row select, .food-item-row select, .food-item-row input { width: auto; }
+  input[type="time"] { padding: 6px 8px; }
+  input.num-sm { width: 84px; text-align: right; }
+  .food-item-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .food-item-row select { flex: 1; min-width: 140px; }
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-ghost { background: var(--bg); color: var(--ink); border: 1px solid var(--border); padding: 6px 10px; font-size: 12px; }
+  .btn-danger { background: #feeceb; color: #b42318; padding: 6px 10px; font-size: 12px; }
+  .meal-totals {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 6px 0 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .med-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .med-pill {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .med-logs { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .log-tag {
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 8px;
+  }
+  .quick-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tl-item {
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 4px 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .tl-item.water { border-left-color: var(--blue); }
+  .tl-item.excrete { border-left-color: var(--green); }
+  .tl-time { font-weight: 700; font-size: 12px; color: var(--muted); }
+  .list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .list-row:last-child { border-bottom: none; }
+  .status-msg {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 700;
+    margin-left: 8px;
+  }
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    z-index: 30;
+  }
+  .nav-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .nav-btn.active { color: var(--accent); font-weight: 700; }
+  .nav-ico { font-size: 18px; }
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    width: 100%;
+    max-width: 440px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  svg.chart { width: 100%; height: 190px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <div class="top-row">
+    <div class="app-title">
+      <span>🐾 ワンちゃんお世話帳</span>
+      <span class="dog-sub" id="headerDogInfo"></span>
+    </div>
+    <button class="room-btn" onclick="openRoomModal()">
+      <span class="dot" id="syncDot"></span>
+      <span id="roomLabel">家族ルーム設定</span>
+    </button>
+  </div>
+  <div class="member-bar" id="memberBar"></div>
+</header>
+
+<main>
+  <div id="syncBanner"></div>
+  <div class="date-bar">
+    <button onclick="shiftDate(-1)">◀ 前日</button>
+    <strong id="currentDateText"></strong>
+    <button onclick="shiftDate(1)">翌日 ▶</button>
+  </div>
+
+  <div id="tab-home"></div>
+  <div id="tab-timeline" style="display:none"></div>
+  <div id="tab-weight" style="display:none"></div>
+  <div id="tab-settings" style="display:none"></div>
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="home" onclick="switchTab('home')"><span class="nav-ico">🍽️</span>ホーム</button>
+  <button class="nav-btn" data-tab="timeline" onclick="switchTab('timeline')"><span class="nav-ico">💧</span>お水・排泄</button>
+  <button class="nav-btn" data-tab="weight" onclick="switchTab('weight')"><span class="nav-ico">📈</span>体重グラフ</button>
+  <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')"><span class="nav-ico">⚙️</span>設定・基本情報</button>
+</nav>
+
+<div class="modal-backdrop" id="roomModal">
+  <div class="modal">
+    <h3>☁️ 家族ルーム＆自動同期設定</h3>
+    <p style="font-size:12px;color:var(--muted)">
+      家族全員のスマホで同じ「家族合言葉」と「共有サーバーURL（Google Apps Script WebアプリURL）」を設定すると、入力データが自動で同期されます。
+    </p>
+    <div class="form-field" style="margin-bottom:8px">
+      <label>家族合言葉（ルームID）</label>
+      <input type="text" id="roomInput" placeholder="例: pochi-family-2026">
+    </div>
+    <div class="form-field" style="margin-bottom:10px">
+      <label>共有サーバーURL（Google Apps Script WebアプリURL・任意）</label>
+      <input type="url" id="endpointInput" placeholder="https://script.google.com/macros/s/xxxxx/exec">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="openSetupGuideModal()">GAS連携手順を見る</button>
+      <button class="btn btn-ghost" onclick="closeRoomModal()">閉じる</button>
+      <button class="btn btn-primary" onclick="saveRoomAndSync()">保存して同期</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="guideModal">
+  <div class="modal">
+    <h3>📋 Googleスプレッドシートで無料自動同期する手順</h3>
+    <p style="font-size:12px;color:var(--muted)">
+      1. Googleドライブでスプレッドシートを作成し、「拡張機能」→「Apps Script」を開きます。<br>
+      2. 下のコードを貼り付けて保存し、「デプロイ」→「新しいデプロイ」→「ウェブアプリ」→アクセスできるユーザーを「全員」にしてデプロイします。<br>
+      3. 発行されたURLを「共有サーバーURL」に貼り付けて保存すると、家族のスマホ同士で自動共有できます。
+    </p>
+    <textarea id="gasCodeBox" rows="11" readonly style="font-size:11px;font-family:monospace"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button class="btn btn-ghost" onclick="copyGasCode()">コードをコピー</button>
+      <button class="btn btn-primary" onclick="closeSetupGuideModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_PREFIX = "dog_care_v8_";
+const DEFAULT_DOG = {
+  name: "",
+  breed: "",
+  sex: "男の子",
+  birthday: "",
+  targetWeightKg: "",
+  targetKcal: "",
+  targetWaterMl: "",
+  vet: "",
+  memo: ""
+};
+const DEFAULT_FOODS = [
+  { id: "f1", name: "ドライフード（チキン）", type: "ドライ", kcalPer100g: 360 },
+  { id: "f2", name: "ウェットフード（野菜入り）", type: "ウェット", kcalPer100g: 85 }
+];
+const DEFAULT_MEDS = [
+  { id: "m1", name: "朝のお薬" },
+  { id: "m2", name: "夜のお薬" }
+];
+const DEFAULT_MEMBERS = ["パパ", "ママ", "家族"];
+
+const GAS_SCRIPT_TEMPLATE = `const SHEET_NAME = 'rooms';
+
+function doGet(e) {
+  const room = (e && e.parameter && e.parameter.room) ? String(e.parameter.room) : 'default';
+  const doc = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = doc.getSheetByName(SHEET_NAME) || doc.insertSheet(SHEET_NAME);
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === room) {
+      return jsonOut({ ok: true, room: room, updatedAt: rows[i][1] || '', state: safeParse(rows[i][2]) });
+    }
+  }
+  return jsonOut({ ok: true, room: room, updatedAt: '', state: null });
+}
+
+function doPost(e) {
+  const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+  const room = String(body.room || 'default');
+  const updatedAt = String(body.updatedAt || new Date().toISOString());
+  const payload = JSON.stringify(body.state || {});
+  const doc = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = doc.getSheetByName(SHEET_NAME) || doc.insertSheet(SHEET_NAME);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['room', 'updatedAt', 'stateJson']);
+  }
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === room) {
+      sheet.getRange(i + 1, 2).setValue(updatedAt);
+      sheet.getRange(i + 1, 3).setValue(payload);
+      return jsonOut({ ok: true, room: room, updatedAt: updatedAt });
+    }
+  }
+  sheet.appendRow([room, updatedAt, payload]);
+  return jsonOut({ ok: true, room: room, updatedAt: updatedAt });
+}
+
+function safeParse(str) {
+  try { return JSON.parse(str); } catch (e) { return null; }
+}
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+let memoryStorage = {};
+function safeGetItem(k) {
+  try { return window.localStorage.getItem(k); } catch (e) { return memoryStorage[k] ?? null; }
+}
+function safeSetItem(k, v) {
+  try { window.localStorage.setItem(k, v); } catch (e) { memoryStorage[k] = v; }
+}
+
+let syncStatusText = "ローカル保存中（共有URL未設定）";
+let isSyncing = false;
+let state = loadState();
+let selectedDate = todayStr();
+let activeTab = "home";
+let weightRange = 30;
+let editingFoodId = null;
+
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function nowTimeStr() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+function shiftDate(delta) {
+  const parts = selectedDate.split("-").map(Number);
+  const d = new Date(parts[0], parts[1] - 1, parts[2] + delta);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  selectedDate = `${y}-${m}-${day}`;
+  render();
+}
+function storageKey(room) {
+  return STORAGE_PREFIX + (room || "default");
+}
+function loadState() {
+  try {
+    const lastRoom = safeGetItem(STORAGE_PREFIX + "last_room") || "default";
+    const lastEndpoint = safeGetItem(STORAGE_PREFIX + "endpoint") || "";
+    const raw = safeGetItem(storageKey(lastRoom));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return normalizeState({ ...parsed, endpoint: parsed.endpoint || lastEndpoint }, lastRoom);
+    }
+    return normalizeState({ endpoint: lastEndpoint }, lastRoom);
+  } catch (e) {}
+  return normalizeState({}, "default");
+}
+function normalizeState(parsed, fallbackRoom) {
+  const room = parsed.room || (fallbackRoom === "default" ? "" : fallbackRoom) || "";
+  return {
+    room,
+    endpoint: String(parsed.endpoint || "").trim(),
+    updatedAt: String(parsed.updatedAt || ""),
+    dog: { ...DEFAULT_DOG, ...(parsed.dog || {}) },
+    members: Array.isArray(parsed.members) && parsed.members.length ? parsed.members : [...DEFAULT_MEMBERS],
+    currentMember: parsed.currentMember || (parsed.members?.[0] || DEFAULT_MEMBERS[0]),
+    mealLabels: Array.isArray(parsed.mealLabels) && parsed.mealLabels.length === 4 ? parsed.mealLabels : ["1回目（朝）", "2回目（昼）", "3回目（夕方）", "4回目（夜）"],
+    foods: Array.isArray(parsed.foods) ? parsed.foods : [...DEFAULT_FOODS],
+    meds: Array.isArray(parsed.meds) ? parsed.meds : [...DEFAULT_MEDS],
+    days: parsed.days && typeof parsed.days === "object" ? parsed.days : {},
+    weights: Array.isArray(parsed.weights) ? parsed.weights : []
+  };
+}
+function saveState(pushToCloud = true) {
+  state.updatedAt = new Date().toISOString();
+  const r = state.room || "default";
+  safeSetItem(STORAGE_PREFIX + "last_room", r);
+  if (state.endpoint) safeSetItem(STORAGE_PREFIX + "endpoint", state.endpoint);
+  safeSetItem(storageKey(r), JSON.stringify(state));
+  updateHeader();
+  if (pushToCloud && state.endpoint && state.room) {
+    pushCloudState();
+  }
+}
+async function pushCloudState() {
+  if (!state.endpoint || !state.room || isSyncing) return;
+  isSyncing = true;
+  syncStatusText = "クラウドへ送信中...";
+  updateHeader();
+  try {
+    const res = await fetch(state.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        room: state.room,
+        updatedAt: state.updatedAt,
+        state: {
+          room: state.room,
+          updatedAt: state.updatedAt,
+          dog: state.dog,
+          members: state.members,
+          currentMember: state.currentMember,
+          mealLabels: state.mealLabels,
+          foods: state.foods,
+          meds: state.meds,
+          days: state.days,
+          weights: state.weights
+        }
+      })
+    });
+    const data = await res.json();
+    syncStatusText = data.ok ? `家族クラウド同期済（${nowTimeStr()}）` : "送信エラー（ローカル保存済）";
+  } catch (err) {
+    syncStatusText = "オフライン/通信待機中（ローカル保存済）";
+  } finally {
+    isSyncing = false;
+    updateHeader();
+  }
+}
+async function pullCloudState() {
+  if (!state.endpoint || !state.room || isSyncing) return;
+  isSyncing = true;
+  try {
+    const url = `${state.endpoint}${state.endpoint.includes("?") ? "&" : "?"}room=${encodeURIComponent(state.room)}&_t=${Date.now()}`;
+    const res = await fetch(url, { method: "GET" });
+    const data = await res.json();
+    if (data && data.ok && data.state) {
+      const remoteTime = Date.parse(data.updatedAt || data.state.updatedAt || 0) || 0;
+      const localTime = Date.parse(state.updatedAt || 0) || 0;
+      if (remoteTime > localTime) {
+        const currentEndpoint = state.endpoint;
+        const currentMember = state.currentMember;
+        state = normalizeState({ ...data.state, endpoint: currentEndpoint, currentMember }, state.room);
+        safeSetItem(storageKey(state.room || "default"), JSON.stringify(state));
+        syncStatusText = `家族の最新データを取得（${nowTimeStr()}）`;
+        render();
+      } else {
+        syncStatusText = `家族クラウド接続中（${nowTimeStr()}）`;
+        updateHeader();
+      }
+    }
+  } catch (err) {
+    syncStatusText = "ローカル保存中（共有サーバー未接続）";
+    updateHeader();
+  } finally {
+    isSyncing = false;
+  }
+}
+function ensureDay(dateStr) {
+  if (!state.days[dateStr]) {
+    const firstFood = state.foods[0]?.id || "";
+    state.days[dateStr] = {
+      meals: [0, 1, 2, 3].map(idx => ({
+        index: idx,
+        time: nowTimeStr(),
+        done: false,
+        by: "",
+        soakMl: 0,
+        items: [{ foodId: firstFood, grams: 0 }]
+      })),
+      medLogs: [],
+      excretes: [],
+      memo: ""
+    };
+  }
+  return state.days[dateStr];
+}
+function calcMealTotals(meal) {
+  let totalGrams = 0;
+  let totalKcal = 0;
+  for (const it of (meal.items || [])) {
+    const g = Number(it.grams) || 0;
+    const food = state.foods.find(f => f.id === it.foodId);
+    const rate = food ? (Number(food.kcalPer100g) || 0) / 100 : 0;
+    totalGrams += g;
+    totalKcal += g * rate;
+  }
+  return { totalGrams: Math.round(totalGrams * 10) / 10, totalKcal: Math.round(totalKcal) };
+}
+function calcDayTotals(day) {
+  let kcal = 0, grams = 0, soakMl = 0;
+  for (const m of (day.meals || [])) {
+    const t = calcMealTotals(m);
+    kcal += t.totalKcal;
+    grams += t.totalGrams;
+    soakMl += Number(m.soakMl) || 0;
+  }
+  let drinkMl = 0;
+  for (const e of (day.excretes || [])) {
+    if (e.category === "water") drinkMl += Number(e.ml) || 0;
+  }
+  return { kcal: Math.round(kcal), grams: Math.round(grams * 10) / 10, soakMl, drinkMl, totalWaterMl: soakMl + drinkMl };
+}
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  ["home", "timeline", "weight", "settings"].forEach(t => {
+    const el = document.getElementById("tab-" + t);
+    if (el) el.style.display = (t === tab) ? "" : "none";
+  });
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function updateHeader() {
+  const hasCloud = Boolean(state.endpoint && state.room);
+  const dotEl = document.getElementById("syncDot");
+  if (dotEl) {
+    dotEl.className = "dot " + (hasCloud ? "cloud" : "local");
+  }
+  const roomEl = document.getElementById("roomLabel");
+  if (roomEl) {
+    roomEl.textContent = state.room ? `ルーム: ${state.room}` : "家族ルーム設定";
+  }
+  const bannerEl = document.getElementById("syncBanner");
+  if (bannerEl) {
+    if (hasCloud) {
+      bannerEl.innerHTML = `
+        <div class="banner ok">
+          <span>☁️ <strong>${escapeHtml(syncStatusText)}</strong></span>
+          <button class="btn btn-ghost" onclick="pullCloudState()">今すぐ更新</button>
+        </div>
+      `;
+    } else {
+      bannerEl.innerHTML = `
+        <div class="banner">
+          <span>📱 家族それぞれのスマホで自動共有するには、右上から「家族合言葉」と「共有サーバーURL」を設定してください。</span>
+          <button class="btn btn-ghost" onclick="openRoomModal()">設定</button>
+        </div>
+      `;
+    }
+  }
+  const dogEl = document.getElementById("headerDogInfo");
+  if (dogEl) dogEl.textContent = state.dog?.name ? `・${state.dog.name}` : "";
+  const dateEl = document.getElementById("currentDateText");
+  if (dateEl) dateEl.textContent = selectedDate + (selectedDate === todayStr() ? "（今日）" : "");
+  const mb = document.getElementById("memberBar");
+  if (mb) {
+    mb.innerHTML = `<span class="member-label">記入者:</span>` + state.members.map(m =>
+      `<button class="chip ${m === state.currentMember ? "active" : ""}" onclick="selectMember('${escapeAttr(m)}')">${escapeHtml(m)}</button>`
+    ).join("");
+  }
+}
+function selectMember(name) {
+  state.currentMember = name;
+  saveState(false);
+  render();
+}
+function render() {
+  try {
+    updateHeader();
+    const day = ensureDay(selectedDate);
+    if (activeTab === "home") renderHome(day);
+    else if (activeTab === "timeline") renderTimeline(day);
+    else if (activeTab === "weight") renderWeight();
+    else if (activeTab === "settings") renderSettings();
+  } catch (err) {
+    const el = document.getElementById("tab-" + activeTab) || document.querySelector("main");
+    if (el) {
+      el.innerHTML = `<div class="card"><strong>表示エラー</strong><p style="font-size:12px;color:var(--muted)">${escapeHtml(err.message || String(err))}</p></div>`;
+    }
+  }
+}
+function renderHome(day) {
+  const totals = calcDayTotals(day);
+  const targetKcal = Number(state.dog?.targetKcal) || 0;
+  const targetWater = Number(state.dog?.targetWaterMl) || 0;
+
+  const mealsHtml = day.meals.map((m, idx) => {
+    const mt = calcMealTotals(m);
+    const itemsHtml = m.items.map((it, iIdx) => {
+      const opts = state.foods.map(f =>
+        `<option value="${escapeAttr(f.id)}" ${f.id === it.foodId ? "selected" : ""}>${escapeHtml(f.name)} (${f.kcalPer100g}kcal/100g)</option>`
+      ).join("");
+      return `
+        <div class="food-item-row">
+          <select onchange="updateMealItem(${idx}, ${iIdx}, 'foodId', this.value)">${opts}</select>
+          <input type="number" class="num-sm" min="0" step="1" value="${it.grams}" onchange="updateMealItem(${idx}, ${iIdx}, 'grams', this.value)">
+          <span style="font-size:12px">g</span>
+          ${m.items.length > 1 ? `<button class="btn btn-danger" onclick="removeMealItem(${idx}, ${iIdx})">×</button>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="card ${m.done ? "done" : ""}">
+        <div class="card-head">
+          <span class="meal-title">${escapeHtml(state.mealLabels[idx] || (idx + 1) + "回目")}</span>
+          <span class="badge ${m.done ? "done" : ""}">${m.done ? `記録済（${escapeHtml(m.by || "")}）` : "未記録"}</span>
+        </div>
+        <div class="field-row">
+          <label class="mini">⏰ 食事の時間
+            <input type="time" value="${escapeAttr(m.time)}" onchange="updateMealField(${idx}, 'time', this.value)">
+          </label>
+          <label class="mini">💧 ふやかし汁
+            <input type="number" class="num-sm" min="0" step="5" value="${m.soakMl || 0}" onchange="updateMealField(${idx}, 'soakMl', Number(this.value) || 0)">
+            <span>ml</span>
+          </label>
+        </div>
+        <div>${itemsHtml}</div>
+        <div style="margin-top:6px">
+          <button class="btn btn-ghost" onclick="addMealItem(${idx})">＋ フードを追加</button>
+        </div>
+        <div class="meal-totals">
+          <span>合計: <strong>${mt.totalGrams}g</strong></span>
+          <span>カロリー: <strong>${mt.totalKcal} kcal</strong></span>
+          <span>ふやかし汁: <strong>${Number(m.soakMl) || 0} ml</strong></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn ${m.done ? "btn-ghost" : "btn-success"}" style="flex:1" onclick="toggleMealDone(${idx})">
+            ${m.done ? "✓ 記録済み（タップで取消）" : "あげた！（記録する）"}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const waterLogsHtml = day.excretes
+    .map((e, i) => ({ ...e, _idx: i }))
+    .filter(e => e.category === "water")
+    .map(e => `<span class="log-tag">${escapeHtml(e.time)} ${escapeHtml(e.label)}${e.ml ? ` ${e.ml}ml` : ""}（${escapeHtml(e.by)}） <a href="#" onclick="delExcrete(${e._idx});return false;">×</a></span>`)
+    .join("");
+
+  const medPills = state.meds.map(med =>
+    `<button class="med-pill" onclick="addMedLog('${escapeAttr(med.id)}')">💊 ${escapeHtml(med.name)} ＋</button>`
+  ).join("");
+  const medLogTags = day.medLogs.map((ml, i) =>
+    `<span class="log-tag">${escapeHtml(ml.time)} ${escapeHtml(ml.name)}（${escapeHtml(ml.by)}） <a href="#" onclick="delMedLog(${i});return false;">×</a></span>`
+  ).join("");
+
+  document.getElementById("tab-home").innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-card kcal">
+        <div class="summary-num">${totals.kcal} kcal</div>
+        <div class="summary-sub">${targetKcal ? `目標 ${targetKcal}kcal / ` : ""}${totals.grams}g</div>
+      </div>
+      <div class="summary-card water">
+        <div class="summary-num">${totals.totalWaterMl} ml</div>
+        <div class="summary-sub">${targetWater ? `目標 ${targetWater}ml / ` : ""}汁${totals.soakMl}+水${totals.drinkMl}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num">${day.meals.filter(m => m.done).length} / 4</div>
+        <div class="summary-sub">給餌完了回数</div>
+      </div>
+    </div>
+    ${mealsHtml}
+    <div class="card">
+      <div class="card-head">
+        <span class="meal-title">💧 お水の飲んだ量（本日 ${totals.drinkMl} ml）</span>
+        <button class="btn btn-ghost" onclick="switchTab('timeline')">排泄・一覧へ</button>
+      </div>
+      <div class="field-row">
+        <label class="mini">⏰ 時刻 <input type="time" id="homeWaterTime" value="${nowTimeStr()}"></label>
+        <label class="mini">飲んだ量 <input type="number" id="homeWaterMl" class="num-sm" min="0" step="10" value="50"> ml</label>
+        <button class="btn btn-blue" onclick="addHomeWater()">＋ 飲んだ量を記録</button>
+      </div>
+      <div class="med-logs">${waterLogsHtml}</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="meal-title">💊 お薬・サプリ記録</span></div>
+      <div class="med-grid">${medPills || "<span style='font-size:12px;color:var(--muted)'>設定タブからお薬を登録できます</span>"}</div>
+      <div class="med-logs">${medLogTags}</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="meal-title">📝 申し送りメモ</span></div>
+      <textarea rows="2" placeholder="体調や気になったこと..." onchange="updateMemo(this.value)">${escapeHtml(day.memo || "")}</textarea>
+    </div>
+  `;
+}
+function addHomeWater() {
+  const day = ensureDay(selectedDate);
+  const t = document.getElementById("homeWaterTime")?.value || nowTimeStr();
+  const ml = Number(document.getElementById("homeWaterMl")?.value) || 0;
+  day.excretes.push({ time: t, category: "water", label: "お水を飲んだ", ml, by: state.currentMember });
+  saveState(true);
+  render();
+}
+function updateMealField(idx, key, val) {
+  const day = ensureDay(selectedDate);
+  day.meals[idx][key] = val;
+  saveState(true);
+  render();
+}
+function updateMealItem(mIdx, iIdx, key, val) {
+  const day = ensureDay(selectedDate);
+  day.meals[mIdx].items[iIdx][key] = key === "grams" ? (Number(val) || 0) : val;
+  saveState(true);
+  render();
+}
+function addMealItem(mIdx) {
+  const day = ensureDay(selectedDate);
+  day.meals[mIdx].items.push({ foodId: state.foods[0]?.id || "", grams: 0 });
+  saveState(true);
+  render();
+}
+function removeMealItem(mIdx, iIdx) {
+  const day = ensureDay(selectedDate);
+  day.meals[mIdx].items.splice(iIdx, 1);
+  saveState(true);
+  render();
+}
+function toggleMealDone(idx) {
+  const day = ensureDay(selectedDate);
+  const m = day.meals[idx];
+  m.done = !m.done;
+  m.by = m.done ? state.currentMember : "";
+  if (m.done && !m.time) m.time = nowTimeStr();
+  saveState(true);
+  render();
+}
+function addMedLog(medId) {
+  const med = state.meds.find(m => m.id === medId);
+  if (!med) return;
+  const day = ensureDay(selectedDate);
+  day.medLogs.push({ time: nowTimeStr(), name: med.name, by: state.currentMember });
+  saveState(true);
+  render();
+}
+function delMedLog(i) {
+  const day = ensureDay(selectedDate);
+  day.medLogs.splice(i, 1);
+  saveState(true);
+  render();
+}
+function updateMemo(val) {
+  const day = ensureDay(selectedDate);
+  day.memo = val;
+  saveState(true);
+}
+function renderTimeline(day) {
+  const totals = calcDayTotals(day);
+  const events = [];
+  day.meals.forEach((m, idx) => {
+    const ml = Number(m.soakMl) || 0;
+    if (ml > 0 || m.done) {
+      events.push({
+        time: m.time || "00:00",
+        category: "water",
+        text: `${state.mealLabels[idx] || (idx+1)+"回目"} ふやかし汁 ${ml} ml` + (m.by ? `（${m.by}）` : "")
+      });
+    }
+  });
+  day.excretes.forEach((e, i) => {
+    events.push({
+      time: e.time,
+      category: e.category,
+      text: e.label + (e.ml ? ` ${e.ml} ml` : "") + `（${e.by}）`,
+      exIndex: i
+    });
+  });
+  events.sort((a, b) => a.time.localeCompare(b.time));
+
+  const listHtml = events.length ? events.map(ev => `
+    <div class="tl-item ${ev.category === "water" ? "water" : "excrete"}">
+      <div class="tl-time">${escapeHtml(ev.time)}</div>
+      <div>${escapeHtml(ev.text)} ${typeof ev.exIndex === "number" ? `<a href="#" onclick="delExcrete(${ev.exIndex});return false;" style="font-size:11px;color:#b42318">削除</a>` : ""}</div>
+    </div>
+  `).join("") : `<p style="font-size:13px;color:var(--muted)">まだ記録がありません。</p>`;
+
+  document.getElementById("tab-timeline").innerHTML = `
+    <div class="card">
+      <div class="card-head"><span class="meal-title">💧 1日の水分サマリー</span></div>
+      <div style="font-size:14px">
+        総水分: <strong>${totals.totalWaterMl} ml</strong>（お水単体: <strong>${totals.drinkMl} ml</strong> ＋ 食事ふやかし汁: <strong>${totals.soakMl} ml</strong>）
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="meal-title">ワンタップ記録</span></div>
+      <div class="field-row">
+        <label class="mini">⏰ 時刻 <input type="time" id="exTime" value="${nowTimeStr()}"></label>
+        <label class="mini">💧 お水(ml) <input type="number" id="exWaterMl" class="num-sm" min="0" step="10" value="50"></label>
+      </div>
+      <div class="quick-btns">
+        <button class="btn btn-ghost" onclick="addExcrete('water', 'お水を飲んだ', Number(document.getElementById('exWaterMl').value)||0)">💧 お水を飲んだ</button>
+        <button class="btn btn-ghost" onclick="addExcrete('water', 'お水交換', 0)">🔄 お水交換</button>
+        <button class="btn btn-ghost" onclick="addExcrete('excrete', 'おしっこ（普通）', 0)">💛 おしっこ（普通）</button>
+        <button class="btn btn-ghost" onclick="addExcrete('excrete', 'おしっこ（多め/少なめ）', 0)">💛 おしっこ（多/少）</button>
+        <button class="btn btn-ghost" onclick="addExcrete('excrete', 'うんち（良い）', 0)">💩 うんち（良い）</button>
+        <button class="btn btn-ghost" onclick="addExcrete('excrete', 'うんち（軟便/下痢/硬め）', 0)">💩 うんち（軟/下/硬）</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="meal-title">🕒 タイムライン</span></div>
+      ${listHtml}
+    </div>
+  `;
+}
+function addExcrete(category, label, ml) {
+  const day = ensureDay(selectedDate);
+  const t = document.getElementById("exTime")?.value || nowTimeStr();
+  day.excretes.push({ time: t, category, label, ml, by: state.currentMember });
+  saveState(true);
+  render();
+}
+function delExcrete(i) {
+  const day = ensureDay(selectedDate);
+  day.excretes.splice(i, 1);
+  saveState(true);
+  render();
+}
+function renderWeight() {
+  const existing = state.weights.find(w => w.date === selectedDate);
+  const sorted = [...state.weights].sort((a, b) => a.date.localeCompare(b.date));
+  const filtered = weightRange === 0 ? sorted : sorted.slice(-weightRange);
+  const latest = sorted[sorted.length - 1];
+  const prev = sorted[sorted.length - 2];
+  const diff = (latest && prev) ? (latest.kg - prev.kg).toFixed(2) : null;
+  const targetW = Number(state.dog?.targetWeightKg) || 0;
+
+  let svgContent = `<text x="50%" y="50%" text-anchor="middle" fill="#7c7065" font-size="13">体重データを入力するとグラフが表示されます</text>`;
+  if (filtered.length > 0) {
+    const vals = filtered.map(d => d.kg);
+    const minV = Math.min(...vals, ...(targetW ? [targetW] : [])) - 0.1;
+    const maxV = Math.max(...vals, ...(targetW ? [targetW] : [])) + 0.1;
+    const w = 600, h = 180, padX = 36, padY = 24;
+    const pts = filtered.map((d, idx) => {
+      const x = filtered.length === 1 ? w / 2 : padX + (idx / (filtered.length - 1)) * (w - padX * 2);
+      const y = padY + (1 - (d.kg - minV) / (maxV - minV || 1)) * (h - padY * 2);
+      return { x, y, d };
+    });
+    const poly = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#e07a38"/>`).join("");
+    let targetLine = "";
+    if (targetW > 0) {
+      const ty = padY + (1 - (targetW - minV) / (maxV - minV || 1)) * (h - padY * 2);
+      targetLine = `<line x1="${padX}" y1="${ty.toFixed(1)}" x2="${w - padX}" y2="${ty.toFixed(1)}" stroke="#2e8b57" stroke-dasharray="5,4" stroke-width="1.5"/>`;
+    }
+    svgContent = `
+      ${targetLine}
+      <polyline fill="none" stroke="#e07a38" stroke-width="2.5" points="${poly}"/>
+      ${dots}
+      <text x="8" y="${padY}" font-size="11" fill="#7c7065">${maxV.toFixed(2)}</text>
+      <text x="8" y="${h - 8}" font-size="11" fill="#7c7065">${minV.toFixed(2)}</text>
+    `;
+  }
+
+  const rowsHtml = [...sorted].reverse().map(w =>
+    `<div class="list-row">
+      <span>${escapeHtml(w.date)}</span>
+      <strong>${Number(w.kg).toFixed(2)} kg</strong>
+    </div>`
+  ).join("");
+
+  document.getElementById("tab-weight").innerHTML = `
+    <div class="card">
+      <div class="card-head"><span class="meal-title">⚖️ 体重を記録（${escapeHtml(selectedDate)}）</span></div>
+      <div class="field-row">
+        <input type="number" id="weightInput" step="0.01" min="0" placeholder="例: 8.52" value="${existing ? existing.kg : ""}" style="width:130px">
+        <span>kg</span>
+        <button class="btn btn-primary" onclick="saveWeight()">記録する</button>
+      </div>
+      <div style="font-size:13px;color:var(--muted)">
+        ${latest ? `最新: <strong>${latest.kg.toFixed(2)} kg</strong> ${diff !== null ? `（前回比 ${Number(diff) >= 0 ? "+" : ""}${diff} kg）` : ""}` : "まだ記録がありません"}
+        ${targetW ? ` ／ 目標: <strong>${targetW.toFixed(2)} kg</strong>` : ""}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <span class="meal-title">📈 体重推移グラフ</span>
+        <div style="display:flex;gap:4px">
+          <button class="chip ${weightRange===7?"active":""}" onclick="setWeightRange(7)">7日</button>
+          <button class="chip ${weightRange===30?"active":""}" onclick="setWeightRange(30)">30日</button>
+          <button class="chip ${weightRange===0?"active":""}" onclick="setWeightRange(0)">全期間</button>
+        </div>
+      </div>
+      <svg class="chart" viewBox="0 0 600 180">${svgContent}</svg>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="meal-title">記録履歴</span></div>
+      ${rowsHtml || "<p style='font-size:13px;color:var(--muted)'>まだ履歴がありません。</p>"}
+    </div>
+  `;
+}
+function saveWeight() {
+  const val = parseFloat(document.getElementById("weightInput").value);
+  if (isNaN(val) || val <= 0) return;
+  const idx = state.weights.findIndex(w => w.date === selectedDate);
+  if (idx >= 0) state.weights[idx].kg = val;
+  else state.weights.push({ date: selectedDate, kg: val });
+  saveState(true);
+  render();
+}
+function setWeightRange(r) {
+  weightRange = r;
+  render();
+}
+function renderSettings() {
+  const dog = state.dog || DEFAULT_DOG;
+
+  const foodsHtml = state.foods.map((f, i) => {
+    if (editingFoodId === f.id) {
+      return `
+        <div class="list-row" style="flex-wrap:wrap">
+          <input type="text" id="editFoodName_${f.id}" value="${escapeAttr(f.name)}" style="flex:1;min-width:130px">
+          <select id="editFoodType_${f.id}">
+            <option value="ドライ" ${f.type==="ドライ"?"selected":""}>ドライ</option>
+            <option value="ウェット" ${f.type==="ウェット"?"selected":""}>ウェット</option>
+            <option value="トッピング" ${f.type==="トッピング"?"selected":""}>トッピング</option>
+            <option value="おやつ" ${f.type==="おやつ"?"selected":""}>おやつ</option>
+          </select>
+          <input type="number" id="editFoodKcal_${f.id}" class="num-sm" min="0" step="1" value="${f.kcalPer100g}">
+          <span style="font-size:11px">kcal/100g</span>
+          <button class="btn btn-success" style="padding:6px 10px;font-size:12px" onclick="saveEditFood('${escapeAttr(f.id)}')">保存</button>
+          <button class="btn btn-ghost" onclick="cancelEditFood()">取消</button>
+        </div>
+      `;
+    }
+    return `
+      <div class="list-row">
+        <div>
+          <strong>${escapeHtml(f.name)}</strong>
+          <span class="badge">${escapeHtml(f.type)}</span>
+          <span>/ <strong>${f.kcalPer100g}</strong> kcal/100g</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost" onclick="startEditFood('${escapeAttr(f.id)}')">編集</button>
+          <button class="btn btn-danger" onclick="delFood(${i})">削除</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const medsHtml = state.meds.map((m, i) => `
+    <div class="list-row">
+      <span>💊 ${escapeHtml(m.name)}</span>
+      <button class="btn btn-danger" onclick="delMed(${i})">削除</button>
+    </div>
+  `).join("");
+
+  const membersListHtml = state.members.map((m, i) => `
+    <div class="list-row">
+      <div>
+        <strong>${escapeHtml(m)}</strong>
+        ${m === state.currentMember ? `<span class="badge done">現在記入中</span>` : ""}
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" onclick="selectMember('${escapeAttr(m)}')">切替</button>
+        ${state.members.length > 1 ? `<button class="btn btn-danger" onclick="delMember(${i})">削除</button>` : ""}
+      </div>
+    </div>
+  `).join("");
+
+  document.getElementById("tab-settings").innerHTML = `
+    <div class="card">
+      <div class="card-head"><span class="meal-title">🐶 犬の基本情報登録</span></div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>お名前</label>
+          <input type="text" id="dogName" placeholder="例: ポチ" value="${escapeAttr(dog.name)}">
+        </div>
+        <div class="form-field">
+          <label>犬種</label>
+          <input type="text" id="dogBreed" placeholder="例: トイプードル" value="${escapeAttr(dog.breed)}">
+        </div>
+        <div class="form-field">
+          <label>性別</label>
+          <select id="dogSex">
+            <option value="男の子" ${dog.sex==="男の子"?"selected":""}>男の子</option>
+            <option value="女の子" ${dog.sex==="女の子"?"selected":""}>女の子</option>
+            <option value="男の子（去勢済）" ${dog.sex==="男の子（去勢済）"?"selected":""}>男の子（去勢済）</option>
+            <option value="女の子（避妊済）" ${dog.sex==="女の子（避妊済）"?"selected":""}>女の子（避妊済）</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>お誕生日</label>
+          <input type="date" id="dogBirthday" value="${escapeAttr(dog.birthday)}">
+        </div>
+        <div class="form-field">
+          <label>目標体重 (kg)</label>
+          <input type="number" step="0.01" min="0" id="dogTargetWeight" placeholder="例: 4.50" value="${escapeAttr(dog.targetWeightKg)}">
+        </div>
+        <div class="form-field">
+          <label>1日の目標カロリー (kcal)</label>
+          <input type="number" step="1" min="0" id="dogTargetKcal" placeholder="例: 320" value="${escapeAttr(dog.targetKcal)}">
+        </div>
+        <div class="form-field">
+          <label>1日の目標水分量 (ml)</label>
+          <input type="number" step="10" min="0" id="dogTargetWater" placeholder="例: 250" value="${escapeAttr(dog.targetWaterMl)}">
+        </div>
+        <div class="form-field">
+          <label>かかりつけ動物病院</label>
+          <input type="text" id="dogVet" placeholder="病院名・連絡先など" value="${escapeAttr(dog.vet)}">
+        </div>
+      </div>
+      <div class="form-field" style="margin-bottom:10px">
+        <label>アレルギー・持病・メモ</label>
+        <textarea rows="2" id="dogMemo" placeholder="アレルギー食材や注意点など">${escapeHtml(dog.memo)}</textarea>
+      </div>
+      <div style="display:flex;align-items:center">
+        <button class="btn btn-primary" onclick="saveDogInfo()">基本情報を保存</button>
+        <span class="status-msg" id="dogSavedMsg"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="meal-title">🍖 フードのカロリー登録・編集（複数登録可）</span></div>
+      ${foodsHtml || "<p style='font-size:13px;color:var(--muted)'>フードが登録されていません。</p>"}
+      <div class="field-row" style="margin-top:10px">
+        <input type="text" id="newFoodName" placeholder="フード名" style="flex:1;min-width:130px">
+        <select id="newFoodType">
+          <option value="ドライ">ドライ</option>
+          <option value="ウェット">ウェット</option>
+          <option value="トッピング">トッピング</option>
+          <option value="おやつ">おやつ</option>
+        </select>
+        <input type="number" id="newFoodKcal" class="num-sm" min="0" step="1" placeholder="kcal/100g">
+        <button class="btn btn-primary" onclick="addFood()">追加</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="meal-title">💊 お薬・サプリ登録</span></div>
+      ${medsHtml}
+      <div class="field-row" style="margin-top:10px">
+        <input type="text" id="newMedName" placeholder="お薬の名前" style="flex:1">
+        <button class="btn btn-primary" onclick="addMed()">追加</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="meal-title">👨‍👩‍👧 記入者の設定</span></div>
+      ${membersListHtml}
+      <div class="field-row" style="margin-top:10px">
+        <input type="text" id="newMemberName" placeholder="新しい記入者名（例: おばあちゃん）" style="flex:1">
+        <button class="btn btn-primary" onclick="addMember()">追加</button>
+      </div>
+      <div class="field-row" style="margin-top:6px">
+        <label class="mini" style="flex:1">一括編集（カンマ区切り）
+          <input type="text" id="membersInput" value="${escapeAttr(state.members.join(", "))}" style="flex:1">
+        </label>
+        <button class="btn btn-ghost" onclick="saveMembers()">一括保存</button>
+      </div>
+    </div>
+  `;
+}
+function saveDogInfo() {
+  state.dog = {
+    name: document.getElementById("dogName").value.trim(),
+    breed: document.getElementById("dogBreed").value.trim(),
+    sex: document.getElementById("dogSex").value,
+    birthday: document.getElementById("dogBirthday").value,
+    targetWeightKg: document.getElementById("dogTargetWeight").value,
+    targetKcal: document.getElementById("dogTargetKcal").value,
+    targetWaterMl: document.getElementById("dogTargetWater").value,
+    vet: document.getElementById("dogVet").value.trim(),
+    memo: document.getElementById("dogMemo").value.trim()
+  };
+  saveState(true);
+  render();
+  const msg = document.getElementById("dogSavedMsg");
+  if (msg) {
+    msg.textContent = "保存しました";
+    setTimeout(() => { if (msg) msg.textContent = ""; }, 2000);
+  }
+}
+function startEditFood(id) {
+  editingFoodId = id;
+  renderSettings();
+}
+function cancelEditFood() {
+  editingFoodId = null;
+  renderSettings();
+}
+function saveEditFood(id) {
+  const name = document.getElementById("editFoodName_" + id)?.value.trim();
+  const type = document.getElementById("editFoodType_" + id)?.value;
+  const kcal = Number(document.getElementById("editFoodKcal_" + id)?.value) || 0;
+  if (!name) return;
+  const target = state.foods.find(f => f.id === id);
+  if (target) {
+    target.name = name;
+    target.type = type;
+    target.kcalPer100g = kcal;
+  }
+  editingFoodId = null;
+  saveState(true);
+  render();
+}
+function addFood() {
+  const name = document.getElementById("newFoodName").value.trim();
+  const type = document.getElementById("newFoodType").value;
+  const kcal = Number(document.getElementById("newFoodKcal").value) || 0;
+  if (!name) return;
+  state.foods.push({ id: "f_" + Date.now(), name, type, kcalPer100g: kcal });
+  saveState(true);
+  render();
+}
+function delFood(i) {
+  state.foods.splice(i, 1);
+  saveState(true);
+  render();
+}
+function addMed() {
+  const name = document.getElementById("newMedName").value.trim();
+  if (!name) return;
+  state.meds.push({ id: "m_" + Date.now(), name });
+  saveState(true);
+  render();
+}
+function delMed(i) {
+  state.meds.splice(i, 1);
+  saveState(true);
+  render();
+}
+function addMember() {
+  const name = document.getElementById("newMemberName").value.trim();
+  if (!name) return;
+  if (!state.members.includes(name)) state.members.push(name);
+  state.currentMember = name;
+  saveState(true);
+  render();
+}
+function delMember(i) {
+  if (state.members.length <= 1) return;
+  const removed = state.members[i];
+  state.members.splice(i, 1);
+  if (state.currentMember === removed) state.currentMember = state.members[0];
+  saveState(true);
+  render();
+}
+function saveMembers() {
+  const list = document.getElementById("membersInput").value.split(",").map(s => s.trim()).filter(Boolean);
+  if (list.length) {
+    state.members = list;
+    if (!state.members.includes(state.currentMember)) state.currentMember = state.members[0];
+    saveState(true);
+    render();
+  }
+}
+function openRoomModal() {
+  document.getElementById("roomInput").value = state.room || "";
+  document.getElementById("endpointInput").value = state.endpoint || "";
+  document.getElementById("roomModal").classList.add("open");
+}
+function closeRoomModal() {
+  document.getElementById("roomModal").classList.remove("open");
+}
+function saveRoomAndSync() {
+  state.room = document.getElementById("roomInput").value.trim();
+  state.endpoint = document.getElementById("endpointInput").value.trim();
+  closeRoomModal();
+  saveState(false);
+  if (state.endpoint && state.room) {
+    pullCloudState().then(() => pushCloudState());
+  } else {
+    render();
+  }
+}
+function openSetupGuideModal() {
+  document.getElementById("gasCodeBox").value = GAS_SCRIPT_TEMPLATE;
+  document.getElementById("guideModal").classList.add("open");
+}
+function closeSetupGuideModal() {
+  document.getElementById("guideModal").classList.remove("open");
+}
+function copyGasCode() {
+  const box = document.getElementById("gasCodeBox");
+  box.select();
+  try { navigator.clipboard?.writeText(box.value); } catch (e) {}
+}
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+function escapeAttr(s) {
+  return escapeHtml(s);
+}
+
+render();
+if (state.endpoint && state.room) {
+  pullCloudState();
+  setInterval(() => {
+    if (document.visibilityState === "visible") pullCloudState();
+  }, 20000);
+}
+</script>
+</body>
+</html>
